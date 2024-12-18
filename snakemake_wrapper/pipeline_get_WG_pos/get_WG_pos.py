@@ -2,9 +2,8 @@ genome_ref=config['genome_ref']# the fasta sequence of the reference genome
 TE_bed=config['TE_bed']# the bed file indicating the genomic postion of each TE of interest on the reference genome
 TE_refseq=config['TE_refseq']# the fasta sequence of the reference TE
 seq_bed=config['seq_bed']# the bed file indicating the position of the sequences of interest on the TE reference sequence
-workdir : config['workdir']
 
-rule all:
+rule targets:
     input:
         'WG_Xtracted_position.Xbed'
 

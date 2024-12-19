@@ -2,14 +2,14 @@ genome_ref=config['genome_ref']# the fasta sequence of the reference genome
 TE_bed=config['TE_bed']# the bed file indicating the genomic postion of each TE of interest on the reference genome
 TE_refseq=config['TE_refseq']# the fasta sequence of the reference TE
 seq_bed=config['seq_bed']# the bed file indicating the position of the sequences of interest on the TE reference sequence
-
-rule targets:
+binpath=config['binpath']
+rule all:
     input:
         'WG_Xtracted_position.Xbed'
 
 rule get_TE_sequences:
     input:
-        genome_ref=genome_ref
+        genome_ref=genome_ref,
         TE_bed=TE_bed
     output:
         temp('TE_OI_sequences.fasta')
@@ -23,13 +23,14 @@ rule map_TE_sequences_on_TE_refseq:
         TE_sequences=rules.get_TE_sequences.output,
         TE_refseq=TE_refseq
     output:
-        bam=temp('mapped_TE_sequences.bam')
-        bam_sorted='mapped_TE_sequences_sorted.bam'
+        bam=temp('mapped_TE_sequences.bam'),
+        bam_sorted=temp('mapped_TE_sequences_sorted.bam'),
+        bam_index=temp('mapped_TE_sequences_sorted.bam.bai')
     shell:
         """
         bowtie2-build {input.TE_refseq} bowtie2_index
         ### modify the command to Tessendier parameter
-        bowtie2 -x bowtie2_index -U {TE_sequences} | samtools view -bs4 - > {output.bam}
+        bowtie2 -x bowtie2_index -U {input.TE_sequences} -N 1 | samtools view -bs4 - > {output.bam}
         samtools sort {output.bam} > {output.bam_sorted}
         samtools index {output.bam_sorted}
         """

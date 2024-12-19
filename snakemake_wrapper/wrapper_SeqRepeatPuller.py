@@ -59,8 +59,8 @@ def run_snakemake(args,binpath,snakefile):
     cmd += ["--cores", str(args.cores)]
 
     # Add working directory
-    if args.working_dir:
-        cmd += ["--directory",str(args.working_dir)]
+#    if args.working_dir:
+#        cmd += ["--directory",str(args.working_dir)]
     # Add profile if specified
     if args.profile:
         cmd += ["--profile", args.profile]
@@ -73,9 +73,10 @@ def run_snakemake(args,binpath,snakefile):
     if args.unlock:
         cmd += ["--unlock"]
 
-    cmd += ["--config", f"binpath={binpath}"]
-    cmd += ["--config", f"workdir={args.working_dir}"]
+    cmd += ["--config", f"binpath={binpath}", f"workdir={args.working_dir}"]
 
+    if not os.path.exists(args.working_dir):
+        os.makedirs(args.working_dir, exist_ok=True)
     # Add logs for better debugging
     # Get current time details
     now = datetime.datetime.now()

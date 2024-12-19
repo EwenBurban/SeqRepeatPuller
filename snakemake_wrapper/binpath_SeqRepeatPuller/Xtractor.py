@@ -12,6 +12,7 @@ if __name__ == '__main__':
     parser.add_argument("-s","--sep",type=str,default='\t',help='columns separator in output file')
     parser.add_argument("-q","--mapping_quality_tag",type=str,default='NM',help='tag name used in bam input file to quantify the quality of the alignment. By default, it’ NM tag (Number of Mismatch)')
     parser.add_argument("-R","--right_ovelap_thr",type=int,default=10,help='minimun amount of bases that the read have after the end of seq of interest')
+    parser.add_argument("-N","--name_tag",type=str,default=None,help='sample name tag')
     args = parser.parse_args()
 
     if not args.bam:
@@ -39,7 +40,7 @@ bamfile=pysam.AlignmentFile(args.bam,'rb')
 #PROCESS
 ## OUTPUT MANAGEMENT
 output=open(args.output,'w')
-header_content=['Read_ID','Read_Xtracted_seq','Xtracted_seq_tag','Xtracted_ref_seq','alignmentQual','Xtracted_seq_pos','Read_insert_start','Read_insert_end','Read_length']
+header_content=['Read_ID','Read_Xtracted_seq','Xtracted_seq_tag','Xtracted_ref_seq','alignmentQual','Xtracted_seq_pos','Read_insert_start','Read_insert_end','Read_length','Name_tag']
 output.write(sep.join(header_content)+'\n')
 
 output.close()
@@ -83,6 +84,7 @@ def extract_seq(row_pos):
         output_line.append(str(segment.reference_start))
         output_line.append(str(segment.reference_end))
         output_line.append(str(segment.query_length))
+        output_line.append(args.name_tag)
 
         output.write(sep.join(output_line)+'\n')
     print('{}:{}-{} done'.format(*row_pos))

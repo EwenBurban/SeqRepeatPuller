@@ -41,6 +41,9 @@ def parse_arguments():
     parser.add_argument(
         "--unlock", action="store_true", help="Unlock the working directory in case of a previous failure."
     )
+    parser.add_argument(
+        "--notemp", action="store_true", help="avoid removing tempory mapping file"
+    )
     # TODO : add an argparse to put the sbatch command + test it on IFB
     return parser.parse_args()
 
@@ -60,8 +63,7 @@ def run_snakemake(args,binpath,snakefile):
 
     # Add working directory
     if args.working_dir:
-        os.chdir(args.working_dir)
-
+        cmd += ["--directory",str(args.working_dir)]
     # Add profile if specified
     if args.profile:
         cmd += ["--profile", args.profile]
@@ -73,7 +75,13 @@ def run_snakemake(args,binpath,snakefile):
         cmd += ["--keep-going"]
     if args.unlock:
         cmd += ["--unlock"]
+    if args.notemp:
+        cmd += ["--notemp"]
 
+    cmd += ["--config", f"binpath={binpath}" ]
+
+    if not os.path.exists(args.working_dir):
+        os.makedirs(args.working_dir, exist_ok=True)
     # Add logs for better debugging
     # Get current time details
     now = datetime.datetime.now()
@@ -103,7 +111,6 @@ def main():
 
     run_snakemake(arguments,binpath,snakefile)
 
-    print("Running Tool 1 pipeline...")
 
 if __name__ == "__main__":
     main()

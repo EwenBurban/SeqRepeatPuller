@@ -2,3 +2,4 @@ dummy_data/
 test_data/
 work_dir/
 .snakemake/
+*.sif

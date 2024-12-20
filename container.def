@@ -1,0 +1,50 @@
+Bootstrap: docker
+From: python:3.10.12-slim  # Base image
+
+%labels
+    Maintainer BURBAN Ewen
+    Version 1.0.0
+
+%environment
+    # Add custom environment variables
+    export PATH="/usr/local/bin:/opt/bismark:$PATH"
+
+%files
+    # Copy the wrapper files into the container
+    ./ /opt/snakemake_wrapper/
+
+%post
+    # Add the Debian bioinformatics repository
+    apt update && apt install -y --no-install-recommends \
+        wget \
+		unzip \
+		gcc \
+        ca-certificates \
+        software-properties-common
+
+    # Add bioinformatics tools from Debian-Med
+    apt update && apt install -y --no-install-recommends \
+        samtools bowtie2 bedtools \
+        && rm -rf /var/lib/apt/lists/*
+
+    # Download and install Bismark
+    wget https://github.com/FelixKrueger/Bismark/archive/refs/heads/master.zip -O bismark.zip
+    unzip bismark.zip
+    mv Bismark-master /opt/bismark
+    chmod +x /opt/bismark/*
+    rm -rf bismark.zip
+
+    # Install Python dependencies
+    pip install snakemake==7.7.0
+    pip install pulp==2.7.0
+    pip install tabulate==0.8.10
+    pip install pandas==2.2.2 numpy==1.26.4
+    pip install pysam==0.22.1
+    pip install --no-cache-dir /opt/snakemake_wrapper
+
+    # Clean up
+    apt clean
+
+%runscript
+    # Set the default behavior of the image
+    exec snakemake_wrapper "$@"

@@ -23,28 +23,12 @@ def parse_arguments():
     parser.add_argument(
         "-c", "--config", type=str, required=True, help="Path to the Snakemake configuration file (e.g., config.yaml)."
     )
-    parser.add_argument( # TODO : to remove as input path is the workdir
-        "-w", "--working-dir", type=str, default=os.getcwd(), help="Working directory for the Snakemake pipeline."
-    )
     parser.add_argument(
-        "-j", "--cores", type=int, default=1, help="Number of CPU cores to use."
+        "-w", "--working-dir", type=str, default=os.getcwd(), help="Working directory for the Snakemake pipeline."
     )
     parser.add_argument(
         "-n", "--dry-run", action="store_true", help="Perform a dry-run to test the pipeline without executing."
     )
-    parser.add_argument(
-        "-k", "--keep-going", action="store_true", help="Continue executing independent jobs even if one fails."
-    )
-    parser.add_argument(
-        "-p", "--profile", type=str, help="Snakemake profile to use (e.g., for cluster execution)."
-    )
-    parser.add_argument(
-        "--unlock", action="store_true", help="Unlock the working directory in case of a previous failure."
-    )
-    parser.add_argument(
-        "--notemp", action="store_true", help="avoid removing tempory mapping file"
-    )
-    # TODO : add an argparse to put the sbatch command + test it on IFB
     return parser.parse_args()
 
 
@@ -58,27 +42,16 @@ def run_snakemake(args,binpath,snakefile):
     # Add configuration file
     cmd += ["--configfile", args.config]
 
-    # Add cores
-    cmd += ["--cores", str(args.cores)]
-
     # Add working directory
     if args.working_dir:
         cmd += ["--directory",str(args.working_dir)]
-    # Add profile if specified
-    if args.profile:
-        cmd += ["--profile", args.profile]
 
     # Handle special flags
     if args.dry_run:
         cmd += ["--dry-run"]
-    if args.keep_going:
-        cmd += ["--keep-going"]
-    if args.unlock:
-        cmd += ["--unlock"]
-    if args.notemp:
-        cmd += ["--notemp"]
 
-    cmd += ["--config", f"binpath={binpath}" ]
+    from snakemake_wrapper.version import __commit__
+    cmd += ["--config", f"binpath={binpath}",f"git_commit={__commit__}"]
 
     if not os.path.exists(args.working_dir):
         os.makedirs(args.working_dir, exist_ok=True)

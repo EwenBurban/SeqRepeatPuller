@@ -61,6 +61,8 @@ def extract_seq(row_pos):
         refpos=pairs[:,1]
         mask=(refpos != None) & (np.array(refpos,dtype=float)>=row_pos['start']) & (np.array(refpos,dtype=float)<=(row_pos['end']-1))
         IOI=pairs[mask,0].tolist()
+        if len(IOI)==0:
+            continue
         output_line.append(str(refStart+IOI[0]))## write the start
         output_line.append(str(refStart+IOI[len(IOI)-1]))## write the end
 

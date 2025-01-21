@@ -7,13 +7,13 @@ format_file= config['format_file']
 pos_file=config['pos_file']
 binpath=config['binpath']
 work_dir=config['workdir']
-
+git_commit=config['git_commit']
 #### optional arguments
 if 'genome_folder' in config.keys():
     genome_folder=config['genome_folder']
 
 if 'read_naming' in config.keys() :
-    readTrack_naming_convention=config['readTrack_naming']
+    readTrack_naming_convention=config['read_naming']
 else : 
     readTrack_naming_convention='_R1|_R2'
 R1_pattern,R2_pattern=readTrack_naming_convention.split('|')
@@ -21,7 +21,7 @@ R1_pattern,R2_pattern=readTrack_naming_convention.split('|')
 if 'aligner' in config.keys():
     aligner=config['aligner']
 else :
-    aligner='bowtie2'
+    aligner=''
 
 if 'fastp_param' in config.keys() :
     fastp_param=config['fastp_param']
@@ -39,9 +39,18 @@ if os.path.exists(input_):  # check for input_ exists, then it'll check if
         print('input_ detected as a single file')
         sample_list = input_
         print(f'input file considered: {input_}')
-        sample_name = re.sub('.*/','',sample_list)
-        name_tags = [sample_name.replace('.' + format_file,'')]
-        input_path = input_.replace(name_tags[0]+'.' + format_file,'')
+        # Extract the file name without the path
+
+        # Extract the base name without format (e.g., `.fastq.gz`)
+        sample_name = os.path.basename(input_)  # Get the file name with extension
+        name_tags = [sample_name.replace('.' + format_file, '')]
+        input_path = os.path.dirname(input_) + "/"
+        if sample_name.endswith("." + format_file):
+            name_tags = [sample_name[: -len("." + format_file)]]
+        else:
+            print("Warning: The format_file does not match the sample_name as expected.")
+            name_tags = [sample_name]  # Fallback to the full sample name
+
     elif os.path.isdir(input_): 
         print("It is a directory.")
         print('input_ detected as a directory, file format provided will be considered')
@@ -59,7 +68,7 @@ else:
     sys.exit(0)
 
 ## Determine from format file the output list
-output_files=['Xtracted_seq.txt','sorted.bam','sorted.bam.bai',"Xtracted_seq.zip"]
+output_files=['Xtracted_seq.txt','sorted.bam','sorted.bam.bai',"Xtracted_seq_metadata.json"]
 dir1=input_path
 dir2=input_path
 dir_final=work_dir
@@ -70,9 +79,12 @@ if format_file!='bam' :
         output_files.append('star.bam')
     elif aligner=='bowtie2':
         output_files.append('bowtie2.bam')
+    else:
+        print('aligner provided is not known. Only bismark, bowtie2 are supported for the moment. If you desire to use another aligner, you can provide only the bam file to SeqRepeatPuller')
+        sys.exit(0)
     
 
-    if format_file!='merged.fastq.gz':
+    if format_file!='merged.fastq.gz' and format_file!='merged.fq.gz':
         output_files.append('merged.fastq.gz')
         name_tags=list(set([re.sub(read_naming_convention,'',x) for x in name_tags]))
             
@@ -83,10 +95,12 @@ if format_file!='bam' :
 else:
     readTrack_names=''
 
-if format_file not in ['fq', 'fastq', 'bam']:
+if format_file not in ['fq.gz', 'fastq.gz', 'bam','merged.fastq.gz','merged.fq.gz']:
     print("format file provided non allowed. Only bam or fastq and fq are allowed")
     sys.exit(0)
 
+if aligner != '':
+    aligner="_" + aligner
 
 wildcard_constraints:
     aligner=aligner,
@@ -94,7 +108,6 @@ wildcard_constraints:
 
 rule all:
     input:
- #       inputs=expand('{input_path}/{name_tag}{readtrack_name}.{format_file}',input_path=input_path,readtrack_name=readtrack_names,name_tag=name_tag,format_file=format_file),
         outputs=expand('{dir_final}/{name_tags}_{output_files}',dir_final=dir_final,name_tags=name_tags,output_files=output_files)
     shell:
         """
@@ -103,31 +116,32 @@ rule all:
 
 rule merge:
     input:
-        r1=f'{dir1}/{{name_tag}}{{r1_pattern}}.{{format_file}}',
-        r2=f'{dir1}/{{name_tag}}{{r2_pattern}}.{{format_file}}'
+        r1=f'{dir1}/{{name_tag}}{R1_pattern}.{format_file}',
+        r2=f'{dir1}/{{name_tag}}{R2_pattern}.{format_file}'
     params:
         fastp_param
+    threads: 1
     output:
-        f'{dir_final}/{{name_tag}}_merged.fastq.gz'
+        f'{dir_final}/{{name_tag}}.merged.fastq.gz'
     shell:
         """
         a="{format_file}"
         fastp -i {input.r1} -m -i {input.r2} {params} --merged_out {output}
 
         """
-rule mapping:
+
+rule mapping_bismark:
     input:
-        rules.merge.output
+        f'{dir_final}/{{name_tag}}.merged.fastq.gz'
+    threads: 5
     output:
-        '{dir_final}/{name_tag}.bam'
+        bam=f'{dir_final}/{{name_tag}}_bismark.bam',
+        tmp_dir=temp(directory(f'{dir_final}/.tmp_bismark_{{name_tag}}/')),
+        ambig=temp(f'{dir_final}/{{name_tag}}_bismark.ambig.bam')
     shell:
         """
-        if [[ "{aligner}" == "bowtie2" ]]; then
-            bowtie2 -x {genome_folder} -U {input} | samtools view -bs4 - > {output}
-
-        elif [[ "{aligner}" == "bismark"; then
-            shell("mkdir -p {dir_final}/.tmp_{wildcards.name_tag}/ ; bismark \
-            --fasta \
+            mkdir -p {output.tmp_dir} ; bismark \
+            --fastq \
             --ambig_bam \
             --ambiguous \
             --unmapped \
@@ -143,15 +157,26 @@ rule mapping:
             -l 15 \
             --genome_folder {genome_folder} \
             --single_end {input}
-            samtools merge -o {output} {dir_final}/{wildcards.name_tag}_bismark.bam {dir_final}/{wildcards.name_tag}_bismark.ambig.bam")
-
-        elif [[ "{aligner}" == "star"]]; then
-            touch {output}'
+            mv {output.bam} {output.tmp_dir}/temporary.bam
+            samtools merge -o {output.bam} {output.tmp_dir}/temporary.bam {output.ambig}
         """
+
+rule mapping_bowtie2:
+    input:
+        f'{dir_final}/{{name_tag}}.merged.fastq.gz'
+    threads: 1
+    output:
+        f'{dir_final}/{{name_tag}}_bowtie2.bam'
+    shell:
+        """
+        bowtie2 -x {genome_folder} -U {input} | samtools view -b - > {output}
+        """
+
 
 rule sort_and_index:
     input:
-        f'{dir2}/{{name_tag}}.bam'
+        f'{dir2}/{{name_tag}}{aligner}.bam'
+    threads: 1
     output:
         sortbam=temp(f'{dir_final}/{{name_tag}}_sorted.bam'),
         index=temp(f'{dir_final}/{{name_tag}}_sorted.bam.bai')
@@ -167,8 +192,9 @@ rule xtraction:
         bam=rules.sort_and_index.output.sortbam,
         index=rules.sort_and_index.output.index,
         pos_file=pos_file
+    threads: 1
     output:
-        temp(f'{dir_final}/{{name_tag}}_Xtracted_seq.txt')
+        f'{dir_final}/{{name_tag}}_Xtracted_seq.txt'
     shell:
         """
         python3 {binpath}/Xtractor.py -b {input.bam} -p {input.pos_file} -o {output} -N {wildcards.name_tag} 
@@ -177,39 +203,10 @@ rule xtraction:
 rule generate_metadata:
     input:
         rules.xtraction.output
+    threads: 1
     output:
-        temp(f'{dir_final}/{{name_tag}}_metadata.json')
-    run:
-        import json
-        from datetime import datetime
-        if format_file == "bam":
-            aligner="None"
-
-        metadata ={
-                "file_name" : input[0],
-                "created_at": datetime.now().isoformat(),
-                "aligner" : aligner,
-                "pos_file": pos_file}
-        with open(output[0],"w") as out_file:
-            json.dump(metadata,out_file,indent=4)
-
-
-        
-rule add_metadata_and_zip:
-    input:
-        xtract=rules.xtraction.output,
-        metadata=rules.generate_metadata.output
-    output:
-        f'{dir_final}/{{name_tag}}_Xtracted_seq.zip'
+        f'{dir_final}/{{name_tag}}_Xtracted_seq_metadata.json'
     shell:
         """
-        zip {output} {input.xtract} {input.metadata}
+        python3 {binpath}/generate_metadata.py -i {input} -c "{config}" -o {output}
         """
-
-
-
-
-
-
-
-

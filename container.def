@@ -19,7 +19,6 @@ From: python:3.10.12-slim  # Base image
         wget \
 		unzip \
 		gcc \
-		zip \
         ca-certificates \
         software-properties-common
 
@@ -48,4 +47,4 @@ From: python:3.10.12-slim  # Base image
 
 %runscript
     # Set the default behavior of the image
-    exec snakemake_wrapper "$@"
+    exec SeqRepeatPuller "$@"

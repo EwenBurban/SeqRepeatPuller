@@ -36,6 +36,8 @@ sudo singularity build seqrepeatpuller.sif container.def
 
 ## Usage
 
+/!\ WARNING : always use absolute pathways and so avoid relatives path in your config.yaml files
+
 ### Generate a position file (optional)
 To generate a position file, provide the following files:
 - `TE_refseq`: Sequence of the repeated element.
@@ -103,12 +105,7 @@ clean_xtracted_results: "True"
 ### Run SeqRepeatPuller
 
 #### Option 1: Starting from a BAM file
-Run:
-```
-singularity exec seqrepeatpuller.sif SeqRepeatPuller -i <input BAM file or directory> \
-    -f bam --pos_file <path to position file> -w <optional output path> -j <number of parallel tasks>
-```
-Alternatively, use a `config.yaml` file:
+Firstly create  a `config.yaml` file:
 ```
 input_: path/to/your/BAM/files
 pos_file: path/to/your/position/file
@@ -147,3 +144,8 @@ singularity exec seqrepeatpuller.sif SeqRepeatPuller -c <config.yaml> -w <option
 ## Troubleshooting
 If you encounter any issues, please submit them on the GitHub issue tracker.
 
+## TODOss
+
+tsrtsrntsssrrssstsntsnr
+- change the way meta 
+data are included to be inside the file (# header) which suppose to add an argument in pandas.read_csv() to skip # lis nes  ieiu       i

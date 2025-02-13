@@ -22,7 +22,7 @@ setup(
         "snakemake_wrapper": [
             "pipeline_*/*",   # Include pipeline files
             "binpath_*/*",   # Include binpath scripts
-            "git_commit.txt",# include file containing git version
+            "version.py",# include file containing git version
 
         ]
     },

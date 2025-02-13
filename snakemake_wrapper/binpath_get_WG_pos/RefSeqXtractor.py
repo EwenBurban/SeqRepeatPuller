@@ -59,7 +59,7 @@ def extract_seq(row_pos):
         pairs=np.array(segment.get_aligned_pairs(matches_only=True),dtype=object)
 
         refpos=pairs[:,1]
-        mask=(refpos != None) & (np.array(refpos,dtype=float)>=row_pos['start']) & (np.array(refpos,dtype=float)<=(row_pos['end']-1))
+        mask=(refpos != None) & (np.array(refpos,dtype=float)>=row_pos['start']) & (np.array(refpos,dtype=float)<(row_pos['end']))
         IOI=pairs[mask,0].tolist()
         if len(IOI)==0:
             continue
@@ -68,8 +68,7 @@ def extract_seq(row_pos):
 
         output_line.append('{raw_tag}:NM={NM}:AS={AS}:TE_POS={TE_POS}'.format(raw_tag=row_pos['name_tag'],NM=segment.get_tag('NM'),AS=segment.get_tag('AS'),TE_POS=name))
 
-        #IOI=[pos for pos, refpos in pairs if refpos is not None and row_pos['start'] <= int(refpos) <= row_pos['end']]
-        seq=segment.get_forward_sequence()
+        seq=segment.query_alignment_sequence
         Xtracted_seq=''.join(seq[index] for index in IOI)
         output_line.append(Xtracted_seq)
 

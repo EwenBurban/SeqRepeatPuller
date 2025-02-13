@@ -23,10 +23,19 @@ else:
     cleaning='false'
     tag_cleaning=""
 
+if 'tag' in config.keys():
+    tag=config['tag']
+else:
+    import random
+    import string
+    characters = string.ascii_letters + string.digits
+    tag = ''.join(random.choice(characters) for _ in range(8))
+
+
 rule all:
     input:
-        ['wg_xtracted_position.xbed',
-        'wg_xtracted_position_metadata.json']
+        [f'{tag}_wg_xtracted_position.xbed',
+        f'{tag}_wg_xtracted_position_metadata.json']
 
 rule get_te_sequences:
     input:
@@ -83,7 +92,7 @@ rule xtract_wg_position:
         bam_index=rules.map_te_sequences_on_te_refseq.output.bam_index
     threads: 1
     output:
-        'wg_xtracted_position.xbed'
+        f'{tag}_wg_xtracted_position.xbed'
     shell:
         """
         python3 {binpath}/RefSeqXtractor.py -b {input.bam_file} -p {input.seq_bed} -o {output}
@@ -94,7 +103,7 @@ rule clean_xtraction:
         rules.xtract_wg_position.output
     threads: 1
     output:
-       'wg_xtracted_position_cleaned.xbed'
+       f'{tag}_wg_xtracted_position_cleaned.xbed'
     shell:
         """
         python3 {binpath}/clean_Xtracted_position.py --xbed {input} -m {output}.pkl -o {output}
@@ -103,9 +112,9 @@ rule clean_xtraction:
 
 rule generate_metadata:
     input:
-        f'wg_xtracted_position{tag_cleaning}.xbed'
+        f'{tag}_wg_xtracted_position{tag_cleaning}.xbed'
     output:
-        'wg_xtracted_position_metadata.json'
+        f'{tag}_wg_xtracted_position_metadata.json'
     shell:
         """
         python3 {binpath}/generate_metadata.py -i {input} -c "{config}" -o {output}

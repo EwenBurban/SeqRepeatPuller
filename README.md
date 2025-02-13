@@ -45,6 +45,8 @@ To generate a position file, provide the following files:
 - `TE_bed`: BED file listing repeated elements of interest.
 - `genome_ref`: Genome sequence of interest.
 
+The resulting file is presented below at "Resulting files" section
+
 Fill a `config.yaml` file with the information:
 ```
 TE_refseq: path/to/your/file
@@ -84,8 +86,10 @@ clean_xtracted_results: "True"
   Ensure custom files adhere to the following column naming convention:
   ```
   refName	refStart	refEnd	2Xtract_seq_tag	2Xtract_ref_seq
-  chr1	47165943	47165944	CG_1:NM=546:AS=-2907:TE_POS=chr1:47165916-47172061(L1PA4)	CA
+  chr1	47165943	47165945	CG_1:NM=546:AS=-2907:TE_POS=chr1:47165916-47172061(L1PA4)	CA
   ```
+
+/!\  Please note that refStart and refEnd follow the bed file convention (refStart is 0-based and refEnd is 1-based)
 
 - **Metadata file (`wg_xtracted_position_metadata.json`):**
   Includes reproducibility details and cleaning process statistics.
@@ -144,8 +148,7 @@ singularity exec seqrepeatpuller.sif SeqRepeatPuller -c <config.yaml> -w <option
 ## Troubleshooting
 If you encounter any issues, please submit them on the GitHub issue tracker.
 
-## TODOss
+## TODO
 
-tsrtsrntsssrrssstsntsnr
-- change the way meta 
-data are included to be inside the file (# header) which suppose to add an argument in pandas.read_csv() to skip # lis nes  ieiu       i
+- change the way meta data are included to be inside the file (# header) which suppose to add an argument in pandas.read_csv() to skip 
+

@@ -22,7 +22,7 @@ Ensure Singularity or Apptainer is pre-installed on your computer or cluster.
 
 ### Option 1: Pre-built container
 ```
-singularity pull seqrepeatpuller.sif https://github.com/EwenBurban/SeqRepeatPuller/releases/download/v0.2/SeqRepeatPuller.sif
+singularity pull seqrepeatpuller.sif https://github.com/EwenBurban/SeqRepeatPuller/releases/download/v0.3/SeqRepeatPuller.sif
 ```
 
 ### Option 2: Build from source code

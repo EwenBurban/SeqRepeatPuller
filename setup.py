@@ -16,7 +16,7 @@ with open("snakemake_wrapper/version.py", "w") as f:
 
 setup(
     name="snakemake_wrapper",
-    version="0.2",
+    version="0.4",
     packages=find_packages(),
     package_data={
         "snakemake_wrapper": [

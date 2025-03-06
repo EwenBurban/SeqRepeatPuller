@@ -29,6 +29,9 @@ def parse_arguments():
     parser.add_argument(
         "-n", "--dry-run", action="store_true", help="Perform a dry-run to test the pipeline without executing."
     )
+    parser.add_argument(
+        "-j", "--jobs", type=int, default=1, help="Number of CPU cores to use."
+    )
     return parser.parse_args()
 
 
@@ -45,6 +48,8 @@ def run_snakemake(args,binpath,snakefile):
     # Add working directory
     if args.working_dir:
         cmd += ["--directory",str(args.working_dir)]
+    # Add cores
+    cmd += ["--jobs", str(args.jobs)]
 
     # Handle special flags
     if args.dry_run:

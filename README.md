@@ -80,6 +80,11 @@ To clean the generated position file and remove gaps or duplicates, include the 
 ```
 clean_xtracted_results: "True"
 ```
+#### Naming
+By default, `get_WG_pos` give a random name to your extraction. If you want to change it, include the following in your `config.yaml`:
+```
+tag: your_tag_name
+```
 
 #### Resulting files
 - **Position file (`wg_xtracted_position.xbed`):**

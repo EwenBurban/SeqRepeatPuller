@@ -63,8 +63,8 @@ def extract_seq(row_pos):
         IOI=pairs[mask,0].tolist()
         if len(IOI)==0:
             continue
-        output_line.append(str(refStart+IOI[0]))## write the start
-        output_line.append(str(refStart+IOI[len(IOI)-1]))## write the end
+        output_line.append(str(refStart+IOI[0]))## write the start (in 0-based)
+        output_line.append(str(refStart+IOI[len(IOI)-1]+1))## write the end (in 1-based)
 
         output_line.append('{raw_tag}:NM={NM}:AS={AS}:TE_POS={TE_POS}'.format(raw_tag=row_pos['name_tag'],NM=segment.get_tag('NM'),AS=segment.get_tag('AS'),TE_POS=name))
 
